@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
-import { getAllBooks, getBookById } from "./booksStore.js";
-import { parseId } from "./validate.js";
+import { getAllBooks, getBookById, createBook } from "./booksStore.js";
+import { parseId, pickBookFields, validateBook } from "./validate.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +27,21 @@ app.get("/api/books/:id", async (req, res) => {
   }
 
   res.json(book);
+});
+app.post("/api/books", async (req, res) => {
+  const result = validateBook(pickBookFields(req.body));
+  if (result.error) {
+    return res.status(400).json({ error: result.error });
+  }
+
+  const created = await createBook(result.value);
+  if (created.conflict) {
+    return res.status(409).json({
+      error: `A book titled "${result.value.title}" by ${result.value.author} already exists`,
+    });
+  }
+
+  res.status(201).location(`/api/books/${created.book.id}`).json(created.book);
 });
 
 app.listen(PORT, () => {

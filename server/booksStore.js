@@ -80,3 +80,20 @@ export async function getBookById(id) {
   await simulateLatency();
   return store.find((book) => book.id === id) ?? null;
 }
+function sameBook(a, b) {
+  return (
+    a.title.toLowerCase() === b.title.toLowerCase() &&
+    a.author.toLowerCase() === b.author.toLowerCase()
+  );
+}
+
+export async function createBook(data) {
+  await simulateLatency();
+  if (store.some((book) => sameBook(book, data))) {
+    return { conflict: true };
+  }
+  const book = { id: nextId, ...data };
+  nextId += 1;
+  store = [...store, book];
+  return { book };
+}
