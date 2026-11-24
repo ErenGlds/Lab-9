@@ -5,6 +5,7 @@ import {
   getBookById,
   createBook,
   replaceBook,
+  deleteBook,
 } from "./booksStore.js";
 import { parseId, pickBookFields, validateBook } from "./validate.js";
 
@@ -105,6 +106,20 @@ app.patch("/api/books/:id", async (req, res) => {
 
   const result = await replaceBook(id, validated.value);
   sendReplaceResult(res, result, validated.value);
+});
+
+app.delete("/api/books/:id", async (req, res) => {
+  const id = parseId(req.params.id);
+  if (id === null) {
+    return res.status(400).json({ error: "id must be a positive integer" });
+  }
+
+  const result = await deleteBook(id);
+  if (result.notFound) {
+    return res.status(404).json({ error: `Book with id ${id} not found` });
+  }
+
+  res.status(204).end();
 });
 
 app.listen(PORT, () => {

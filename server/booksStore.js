@@ -109,3 +109,11 @@ export async function replaceBook(id, data) {
   store = store.map((item) => (item.id === id ? book : item));
   return { book };
 }
+export async function deleteBook(id) {
+  await simulateLatency();
+  if (!store.some((book) => book.id === id)) {
+    return { notFound: true };
+  }
+  store = store.filter((book) => book.id !== id);
+  return { deleted: true };
+}
