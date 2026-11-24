@@ -1,4 +1,4 @@
-function BookList({ books }) {
+function BookList({ books, onEdit }) {
   return (
     <ul className="book-list">
       {books.map((book) => (
@@ -9,6 +9,9 @@ function BookList({ books }) {
               {book.year} · {book.genre} · {book.read ? "Read" : "Unread"}
               {book.rating !== null && ` · ${book.rating}/5`}
             </div>
+          </div>
+          <div className="actions">
+            <button onClick={() => onEdit(book)}>Edit</button>
           </div>
         </li>
       ))}

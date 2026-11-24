@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { fetchBooks } from "./api/books";
+import { fetchBooks, createBook, replaceBook } from "./api/books";
 import Filters from "./components/Filters";
 import BookList from "./components/BookList";
+import BookForm from "./components/BookForm";
 
 const INITIAL_FILTERS = { q: "", genre: "", read: "", sort: "", order: "asc" };
 
@@ -9,6 +10,9 @@ function App() {
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [reloadKey, setReloadKey] = useState(0);
   const [result, setResult] = useState({ key: null, books: [], error: null });
+  const [form, setForm] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState(null);
 
   const requestKey = JSON.stringify([filters, reloadKey]);
 
@@ -33,9 +37,51 @@ function App() {
     setFilters((current) => ({ ...current, ...changes }));
   };
 
+  const openForm = (book) => {
+    setFormError(null);
+    setForm({ book });
+  };
+
+  const closeForm = () => {
+    setFormError(null);
+    setForm(null);
+  };
+
+  const handleSubmit = async (data) => {
+    setSubmitting(true);
+    setFormError(null);
+
+    try {
+      if (form.book) {
+        await replaceBook(form.book.id, data);
+      } else {
+        await createBook(data);
+      }
+      setForm(null);
+      setReloadKey((key) => key + 1);
+    } catch (err) {
+      setFormError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="app">
       <h1>Reading List</h1>
+
+      {form ? (
+        <BookForm
+          key={form.book ? form.book.id : "new"}
+          book={form.book}
+          submitting={submitting}
+          error={formError}
+          onSubmit={handleSubmit}
+          onCancel={closeForm}
+        />
+      ) : (
+        <button onClick={() => openForm(null)}>Add book</button>
+      )}
 
       <Filters filters={filters} onChange={changeFilters} />
 
@@ -52,7 +98,9 @@ function App() {
 
       {!loading && !error && books.length === 0 && <p>No books found.</p>}
 
-      {!loading && !error && books.length > 0 && <BookList books={books} />}
+      {!loading && !error && books.length > 0 && (
+        <BookList books={books} onEdit={openForm} />
+      )}
     </div>
   );
 }

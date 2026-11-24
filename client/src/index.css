@@ -19,7 +19,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
+  margin: 16px 0;
 }
 
 input,
@@ -65,6 +65,40 @@ button:disabled {
   color: #6b7280;
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .error {
   color: #b91c1c;
+}
+
+.book-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  margin-bottom: 8px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
+.book-form h2 {
+  margin: 0;
+}
+
+.book-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+.book-form label.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
