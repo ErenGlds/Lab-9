@@ -152,3 +152,27 @@ export async function listBooks(options) {
   const start = (page - 1) * limit;
   return sorted.slice(start, start + limit);
 }
+export async function getStats() {
+  await simulateLatency();
+  const total = store.length;
+  const read = store.filter((book) => book.read).length;
+  const ratings = store
+    .filter((book) => book.rating !== null)
+    .map((book) => book.rating);
+  const averageRating =
+    ratings.length === 0
+      ? null
+      : Math.round(
+          (ratings.reduce((sum, value) => sum + value, 0) / ratings.length) *
+            10,
+        ) / 10;
+  const byGenre = store.reduce(
+    (counts, book) => ({
+      ...counts,
+      [book.genre]: (counts[book.genre] ?? 0) + 1,
+    }),
+    {},
+  );
+
+  return { total, read, unread: total - read, averageRating, byGenre };
+}

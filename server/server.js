@@ -6,6 +6,7 @@ import {
   createBook,
   replaceBook,
   deleteBook,
+  getStats,
 } from "./booksStore.js";
 import {
   parseId,
@@ -130,6 +131,11 @@ app.delete("/api/books/:id", async (req, res) => {
   }
 
   res.status(204).end();
+});
+
+app.get("/api/stats", async (req, res) => {
+  const stats = await getStats();
+  res.json(stats);
 });
 
 app.listen(PORT, () => {
