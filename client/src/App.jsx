@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
-import { fetchBooks, createBook, replaceBook } from "./api/books";
+import {
+  fetchBooks,
+  createBook,
+  replaceBook,
+  patchBook,
+  deleteBook,
+} from "./api/books";
 import Filters from "./components/Filters";
 import BookList from "./components/BookList";
 import BookForm from "./components/BookForm";
+import StatsPanel from "./components/StatsPanel";
 
 const INITIAL_FILTERS = { q: "", genre: "", read: "", sort: "", order: "asc" };
 
@@ -13,6 +20,8 @@ function App() {
   const [form, setForm] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
   const requestKey = JSON.stringify([filters, reloadKey]);
 
@@ -66,9 +75,41 @@ function App() {
     }
   };
 
+  const runAction = async (action) => {
+    setBusy(true);
+    setActionError(null);
+
+    try {
+      await action();
+      setReloadKey((key) => key + 1);
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleRead = (book) =>
+    runAction(() =>
+      patchBook(
+        book.id,
+        book.read ? { read: false, rating: null } : { read: true },
+      ),
+    );
+
+  const rateBook = (book, rating) =>
+    runAction(() => patchBook(book.id, { rating }));
+
+  const removeBook = (book) => {
+    if (!window.confirm(`Delete "${book.title}"?`)) return;
+    runAction(() => deleteBook(book.id));
+  };
+
   return (
     <div className="app">
       <h1>Reading List</h1>
+
+      <StatsPanel refreshKey={reloadKey} />
 
       {form ? (
         <BookForm
@@ -85,6 +126,8 @@ function App() {
 
       <Filters filters={filters} onChange={changeFilters} />
 
+      {actionError && <p className="error">{actionError}</p>}
+
       {loading && <p>Loading books...</p>}
 
       {error && (
@@ -99,7 +142,14 @@ function App() {
       {!loading && !error && books.length === 0 && <p>No books found.</p>}
 
       {!loading && !error && books.length > 0 && (
-        <BookList books={books} onEdit={openForm} />
+        <BookList
+          books={books}
+          busy={busy}
+          onEdit={openForm}
+          onToggleRead={toggleRead}
+          onRate={rateBook}
+          onDelete={removeBook}
+        />
       )}
     </div>
   );
