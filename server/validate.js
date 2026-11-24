@@ -80,3 +80,54 @@ export function validateBook(input) {
     },
   };
 }
+const SORT_FIELDS = ["title", "author", "year", "rating"];
+const QUERY_KEYS = ["genre", "read", "q", "sort", "order", "limit", "page"];
+
+function parseIntParam(raw) {
+  return /^\d+$/.test(raw) ? Number(raw) : null;
+}
+
+export function validateListQuery(query) {
+  for (const key of QUERY_KEYS) {
+    if (Array.isArray(query[key])) {
+      return { error: `Query parameter "${key}" must not be repeated` };
+    }
+  }
+
+  const { genre, read, q, sort, order } = query;
+
+  if (genre !== undefined && !GENRES.includes(genre)) {
+    return { error: `genre must be one of: ${GENRES.join(", ")}` };
+  }
+  if (read !== undefined && read !== "true" && read !== "false") {
+    return { error: 'read must be "true" or "false"' };
+  }
+  if (sort !== undefined && !SORT_FIELDS.includes(sort)) {
+    return { error: `sort must be one of: ${SORT_FIELDS.join(", ")}` };
+  }
+  if (order !== undefined && order !== "asc" && order !== "desc") {
+    return { error: 'order must be "asc" or "desc"' };
+  }
+
+  const limit = query.limit === undefined ? 50 : parseIntParam(query.limit);
+  if (limit === null || limit < 1 || limit > 50) {
+    return { error: "limit must be an integer from 1 to 50" };
+  }
+
+  const page = query.page === undefined ? 1 : parseIntParam(query.page);
+  if (page === null || page < 1) {
+    return { error: "page must be a positive integer" };
+  }
+
+  return {
+    value: {
+      genre,
+      read: read === undefined ? undefined : read === "true",
+      q: typeof q === "string" ? q.trim() : "",
+      sort: sort ?? "id",
+      order: order ?? "asc",
+      limit,
+      page,
+    },
+  };
+}

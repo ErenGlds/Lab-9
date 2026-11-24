@@ -117,3 +117,38 @@ export async function deleteBook(id) {
   store = store.filter((book) => book.id !== id);
   return { deleted: true };
 }
+function compareBooks(a, b, field, direction) {
+  if (field === "rating") {
+    if (a.rating === null && b.rating === null) return a.id - b.id;
+    if (a.rating === null) return 1;
+    if (b.rating === null) return -1;
+    return (a.rating - b.rating) * direction || a.id - b.id;
+  }
+  const result =
+    typeof a[field] === "string"
+      ? a[field].localeCompare(b[field])
+      : a[field] - b[field];
+  return result * direction || a.id - b.id;
+}
+
+export async function listBooks(options) {
+  await simulateLatency();
+  const { genre, read, q, sort, order, limit, page } = options;
+  const needle = q.toLowerCase();
+
+  const filtered = store.filter(
+    (book) =>
+      (genre === undefined || book.genre === genre) &&
+      (read === undefined || book.read === read) &&
+      (needle === "" ||
+        book.title.toLowerCase().includes(needle) ||
+        book.author.toLowerCase().includes(needle)),
+  );
+
+  const direction = order === "desc" ? -1 : 1;
+  const sorted = [...filtered].sort((a, b) =>
+    compareBooks(a, b, sort, direction),
+  );
+  const start = (page - 1) * limit;
+  return sorted.slice(start, start + limit);
+}
