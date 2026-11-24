@@ -97,3 +97,15 @@ export async function createBook(data) {
   store = [...store, book];
   return { book };
 }
+export async function replaceBook(id, data) {
+  await simulateLatency();
+  if (!store.some((book) => book.id === id)) {
+    return { notFound: true };
+  }
+  if (store.some((book) => book.id !== id && sameBook(book, data))) {
+    return { conflict: true };
+  }
+  const book = { id, ...data };
+  store = store.map((item) => (item.id === id ? book : item));
+  return { book };
+}
